@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_background">#F2F2F7</color>
+    <color name="widget_text_primary">#1A1A1A</color>
+    <color name="widget_text_secondary">#6B6B70</color>
+    <color name="widget_dot_connected">#43A047</color>
+    <color name="widget_dot_disconnected">#9AA0A6</color>
+    <color name="widget_toggle_background">#1F6666FB</color>
+    <color name="widget_toggle_icon">#6666FB</color>
+</resources>

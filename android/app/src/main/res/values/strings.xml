@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">FlClash Status</string>
+    <string name="widget_description">Shows VPN connection status, profile, and speed.</string>
+    <string name="widget_status_connected">Connected</string>
+    <string name="widget_status_connecting">Connecting…</string>
+    <string name="widget_status_disconnecting">Disconnecting…</string>
+    <string name="widget_status_disconnected">Disconnected</string>
+    <string name="widget_toggle_content_description">Toggle VPN</string>
+</resources>

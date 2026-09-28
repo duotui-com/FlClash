@@ -4,6 +4,7 @@ import com.follow.clash.ServiceController
 import com.follow.clash.ServiceState
 import com.follow.clash.common.Components
 import com.follow.clash.models.SharedState
+import com.follow.clash.widget.WidgetUpdater
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -93,6 +94,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
         scope.launch {
             ServiceState.syncSharedState(state)
+            WidgetUpdater.refresh()
             result.success("")
         }
     }
