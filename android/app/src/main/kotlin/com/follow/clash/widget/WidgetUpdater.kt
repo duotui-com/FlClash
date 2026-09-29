@@ -10,8 +10,6 @@ import com.follow.clash.RunState
 import com.follow.clash.ServiceState
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
-import com.follow.clash.common.QuickAction
-import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
 import com.follow.clash.core.Core
 import com.follow.clash.service.models.getSpeedTrafficText
@@ -19,14 +17,7 @@ import com.follow.clash.sharedState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-
-private val RunState.labelRes: Int
-    get() = when (this) {
-        RunState.STARTED -> R.string.widget_status_connected
-        RunState.STARTING -> R.string.widget_status_connecting
-        RunState.STOPPING -> R.string.widget_status_disconnecting
-        RunState.STOPPED -> R.string.widget_status_disconnected
-    }
+import kotlinx.coroutines.launch
 
 // Started/stopped by VpnWidgetProvider's onEnabled/onDisabled, so the per-second tick
 // only runs while a widget instance actually exists.
@@ -36,12 +27,17 @@ internal object WidgetUpdater {
     @Volatile
     private var job: Job? = null
 
+    // No connection start time is persisted, so a process restart while connected resets this to now.
+    @Volatile
+    private var connectedAtMillis: Long = 0L
+
     @Synchronized
     fun start() {
         if (job != null) return
         job = GlobalState.launch {
             ServiceState.runState.collectLatest { state ->
                 if (state == RunState.STARTED) {
+                    connectedAtMillis = System.currentTimeMillis()
                     while (true) {
                         render(state)
                         delay(1_000)
@@ -77,7 +73,6 @@ internal object WidgetUpdater {
         val connected = state == RunState.STARTED
         val views = RemoteViews(application.packageName, R.layout.widget_vpn_status)
 
-        views.setTextViewText(R.id.widget_status, application.getString(state.labelRes))
         views.setInt(
             R.id.widget_dot,
             "setColorFilter",
@@ -87,19 +82,24 @@ internal object WidgetUpdater {
         )
         views.setTextViewText(R.id.widget_profile_name, shared.currentProfileName)
         views.setViewVisibility(R.id.widget_speed, if (connected) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.widget_uptime, if (connected) View.VISIBLE else View.GONE)
         if (connected) {
             views.setTextViewText(R.id.widget_speed, Core.getSpeedTrafficText(shared.onlyStatisticsProxy))
+            views.setTextViewText(R.id.widget_uptime, formatUptime(System.currentTimeMillis() - connectedAtMillis))
         }
 
-        views.setContentDescription(
-            R.id.widget_toggle,
-            application.getString(R.string.widget_toggle_content_description),
-        )
-        views.setOnClickPendingIntent(R.id.widget_toggle, QuickAction.TOGGLE.quickIntent.toPendingIntent)
         views.setOnClickPendingIntent(
             R.id.widget_root,
             Intent().setComponent(Components.mainActivity).toPendingIntent,
         )
         return views
+    }
+
+    private fun formatUptime(elapsedMillis: Long): String {
+        val totalSeconds = (elapsedMillis / 1_000).coerceAtLeast(0)
+        val hours = totalSeconds / 3_600
+        val minutes = (totalSeconds % 3_600) / 60
+        val seconds = totalSeconds % 60
+        return "%02d:%02d:%02d".format(hours, minutes, seconds)
     }
 }
